@@ -119,7 +119,8 @@
     cursor: pointer;
   }
   .actions button:hover { color: var(--ink); border-color: var(--green); }
-  .form-row { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .form-row { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px; }
+  .form-row .add { align-self: flex-end; }
   .check { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 0.9rem; cursor: pointer; }
   .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--green); }
   .repeat { color: var(--ink); font-weight: 600; }
@@ -128,6 +129,7 @@
 
   @media (max-width: 520px) {
     form { grid-template-columns: 1fr; }
+    .form-row .add { align-self: stretch; }
     li { flex-direction: column; }
   }
 </style>
