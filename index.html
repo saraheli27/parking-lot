@@ -140,7 +140,7 @@
     <select id="tag">
       <option>Idea</option>
       <option>Someday</option>
-      <option>Read / watch</option>
+      <option>Read / Watch</option>
       <option>Home</option>
       <option>Follow up</option>
     </select>
@@ -156,10 +156,15 @@
   const KEY = "parking-lot-items";
   let items = load();
   let filter = "All";
-  const TAG_CLASS = { "Idea": "t-idea", "Someday": "t-someday", "Read / watch": "t-read", "Home": "t-home", "Follow up": "t-follow" };
+  const TAG_CLASS = { "Idea": "t-idea", "Someday": "t-someday", "Read / Watch": "t-read", "Home": "t-home", "Follow up": "t-follow" };
 
   function load() {
-    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY)) || [];
+      // Rename tags saved under the old label
+      saved.forEach(i => { if (i.tag === "Read / watch") i.tag = "Read / Watch"; });
+      return saved;
+    }
     catch (e) { return []; }
   }
   function save() {
