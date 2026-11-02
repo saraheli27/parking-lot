@@ -53,8 +53,6 @@
   textarea { resize: vertical; min-height: 44px; }
   input:focus, select:focus, textarea:focus { outline: 3px solid var(--mustard); outline-offset: 0; border-color: var(--green); }
   button.add {
-    grid-column: 1 / -1;
-    justify-self: end;
     background: var(--accent);
     color: #fff;
     border: 0;
@@ -121,6 +119,11 @@
     cursor: pointer;
   }
   .actions button:hover { color: var(--ink); border-color: var(--green); }
+  .form-row { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .check { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 0.9rem; cursor: pointer; }
+  .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--green); }
+  .repeat { color: var(--ink); font-weight: 600; }
+  .actions button.on { background: var(--blue); border-color: var(--blue); color: var(--ink); }
   .empty { color: var(--muted); text-align: center; padding: 32px 0; }
 
   @media (max-width: 520px) {
@@ -145,7 +148,10 @@
       <option>Follow up</option>
     </select>
     <textarea id="note" placeholder="Optional note — why it matters, when to revisit"></textarea>
-    <button class="add" type="submit">Park it</button>
+    <div class="form-row">
+      <label class="check"><input type="checkbox" id="recurring"> Recurring — log it done but keep it parked</label>
+      <button class="add" type="submit">Park it</button>
+    </div>
   </form>
 
   <div class="filters" id="filters"></div>
@@ -169,6 +175,14 @@
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {}
+  }
+
+  function repeatInfo(i) {
+    if (!i.recurring) return "";
+    const n = (i.log || []).length;
+    if (!n) return ' · <span class="repeat">Recurring</span>';
+    const last = new Date(i.log[n - 1]).toLocaleDateString();
+    return ` · <span class="repeat">Done ${n}× · last ${last}</span>`;
   }
 
   function render() {
@@ -203,16 +217,26 @@
         <div class="body">
           <p class="text"></p>
           ${i.note ? '<p class="note"></p>' : ""}
-          <div class="meta"><span class="tag"></span>${new Date(i.created).toLocaleDateString()}</div>
+          <div class="meta"><span class="tag"></span>${new Date(i.created).toLocaleDateString()}${repeatInfo(i)}</div>
         </div>
         <div class="actions">
-          <button data-act="toggle">${i.done ? "Restore" : "Done"}</button>
+          <button data-act="toggle">${i.done ? "Restore" : i.recurring ? "Log done" : "Done"}</button>
+          ${i.done ? "" : `<button data-act="repeat" class="${i.recurring ? "on" : ""}" title="Recurring on/off">Recurring</button>`}
           <button data-act="delete">Delete</button>
         </div>`;
       li.querySelector(".text").textContent = i.text;
       if (i.note) li.querySelector(".note").textContent = i.note;
       li.querySelector(".tag").textContent = i.tag;
-      li.querySelector('[data-act="toggle"]').onclick = () => { i.done = !i.done; save(); render(); };
+      li.querySelector('[data-act="toggle"]').onclick = () => {
+        if (i.recurring && !i.done) {
+          (i.log = i.log || []).push(Date.now());   // log it, keep it parked
+        } else {
+          i.done = !i.done;
+        }
+        save(); render();
+      };
+      const rb = li.querySelector('[data-act="repeat"]');
+      if (rb) rb.onclick = () => { i.recurring = !i.recurring; save(); render(); };
       li.querySelector('[data-act="delete"]').onclick = () => {
         items = items.filter(x => x.id !== i.id); save(); render();
       };
@@ -230,7 +254,9 @@
       note: document.getElementById("note").value.trim(),
       tag: document.getElementById("tag").value,
       created: Date.now(),
-      done: false
+      done: false,
+      recurring: document.getElementById("recurring").checked,
+      log: []
     });
     save();
     e.target.reset();
